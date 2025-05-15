@@ -97,6 +97,8 @@ def run_ffmpeg_with_progress(video_path, audio_path, output_path, title, total_d
 	]
 	if not os.path.exists("ffmpeg merge logs"):
 		os.mkdir("ffmpeg merge logs")
+	if not os.path.exists("videos"):
+		os.mkdir("videos")
 	with open(F"ffmpeg merge logs/{sanitize_filename(title)}.log", "w", encoding="utf-8") as logfile:
 		process = subprocess.Popen(
 			merge_command,
