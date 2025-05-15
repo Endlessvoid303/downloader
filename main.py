@@ -95,30 +95,33 @@ def run_ffmpeg_with_progress(video_path, audio_path, output_path, title, total_d
 		"-c:a", "aac",
 		output_path
 	]
+	if not os.path.exists("ffmpeg merge logs"):
+		os.mkdir("ffmpeg merge logs")
+	with open(F"ffmpeg merge logs/{sanitize_filename(title)}.log", "w", encoding="utf-8") as logfile:
+		process = subprocess.Popen(
+			merge_command,
+			stderr=subprocess.PIPE,
+			stdout=subprocess.DEVNULL,
+			universal_newlines=True,
+			bufsize=1
+		)
 
-	process = subprocess.Popen(
-		merge_command,
-		stderr=subprocess.PIPE,
-		stdout=subprocess.DEVNULL,
-		universal_newlines=True,
-		bufsize=1
-	)
+		duration_regex = re.compile(r'time=(\d+):(\d+):(\d+)\.(\d+)')
 
-	duration_regex = re.compile(r'time=(\d+):(\d+):(\d+)\.(\d+)')
+		while True:
+			line = process.stderr.readline()
+			if not line:
+				break
+			logfile.write(line)
 
-	while True:
-		line = process.stderr.readline()
-		if not line:
-			break
+			match = duration_regex.search(line)
+			if match:
+				hours, minutes, seconds, millis = map(int, match.groups())
+				current_time = hours * 3600 + minutes * 60 + seconds + millis / 100
+				progress = min(current_time / total_duration, 1.0)
+				showmessage(F"{title} merging",index,progress*100)
 
-		match = duration_regex.search(line)
-		if match:
-			hours, minutes, seconds, millis = map(int, match.groups())
-			current_time = hours * 3600 + minutes * 60 + seconds + millis / 100
-			progress = min(current_time / total_duration, 1.0)
-			showmessage(F"{title} merging",index,progress*100)
-
-	process.wait()
+		process.wait()
 
 def waitfordownloadsandexit():
 	global progressbars
